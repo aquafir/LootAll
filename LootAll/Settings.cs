@@ -24,7 +24,16 @@ public enum LootStyle
 
 public enum LooterRequirements
 {
+    /// <summary>
+    /// No restrictions
+    /// </summary>
     None        = 0,
+    /// <summary>
+    /// Fellow must be in same landblock
+    /// </summary>
     Landblock   = 1,
+    /// <summary>
+    /// Fellow must be within 2x max range
+    /// </summary>
     Range       = 2,
 }
