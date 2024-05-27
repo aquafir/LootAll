@@ -119,6 +119,9 @@ public class PatchClass
         //Get a list of lootable items
         var loot = LootAll(player, __instance);
 
+        if (loot.Count == 0)
+            return false;
+
         //Get a list of looters, just the player if not in a fellow with some restriction
         List<Player> looters = Settings.LooterRequirements switch
         {
@@ -127,9 +130,11 @@ public class PatchClass
             LooterRequirements.Range => 
                 player.GetFellowshipTargets().Where(x => x.Location.Distance2D(player.Location) < Fellowship.MaxDistance * 2).ToList(),
             _ => player.GetFellowshipTargets().ToList(),
-        };         
+        };
 
-        player.SendMessage($"Looting {loot.Count} items for {looters.Count} players");
+
+        if (player.GetProperty(LootMuted) != true)
+            player.SendMessage($"Looting {loot.Count} items for {looters.Count} players", Settings.MessageType);
 
         //Roll a random starting player for round-robin
         var index = random.Next(0, looters.Count);
@@ -140,18 +145,16 @@ public class PatchClass
             switch (Settings.LootStyle)
             {
                 case LootStyle.Finder:
-                    if (!player.TryCreateInInventoryWithNetworking(item))
-                    {
-                        //  player.SendMessage($"Failed to loot {item.Name}");
-                    }
+                    var success = player.TryCreateInInventoryWithNetworking(item);
+                    if (player.GetProperty(LootMuted) != true)
+                        player.SendMessage($"{(success ? "Looted" : "Failed to loot")} {item.Name}.", Settings.MessageType);
                     break;
                 case LootStyle.RoundRobin:
                     var looter = looters[index];
                     index = (index + 1) % looters.Count;
-                    if (!looter.TryCreateInInventoryWithNetworking(item))
-                    {
-                        //  looter.SendMessage($"Failed to loot {item.Name}");
-                    }
+                    var s2 = looter.TryCreateInInventoryWithNetworking(item);
+                    if (looter.GetProperty(LootMuted) != true)
+                        looter.SendMessage($"{(s2 ? "Looted" : "Failed to loot")} {item.Name}.", Settings.MessageType);
                     break;
                 case LootStyle.OneForAll:
                     foreach (var l in looters)
@@ -159,10 +162,9 @@ public class PatchClass
                         //TODO: proper clone instead of weenie clone
                         var clonedItem = WorldObjectFactory.CreateNewWorldObject(item.WeenieClassId);
 
-                        if (!l.TryCreateInInventoryWithNetworking(clonedItem))
-                        {
-                            //  l.SendMessage($"Failed to loot {item.Name}");
-                        }
+                        var s3 = l.TryCreateInInventoryWithNetworking(item);
+                        if (l.GetProperty(LootMuted) != true)
+                            l.SendMessage($"{(s3 ? "Looted" : "Failed to loot")} {item.Name}.", Settings.MessageType);
                     }
                     item?.Destroy(); //Clean up source item?
                     break;
@@ -221,6 +223,26 @@ public class PatchClass
         return droppedItems;
     }
 
+    //Create a fake property bool to track
+    static PropertyBool LootMuted = (PropertyBool)39998;
+
+    //Create a command to toggle the variable
+    [CommandHandler("lootmute", AccessLevel.Player, CommandHandlerFlag.RequiresWorld)]
+    public static void HandleT2(Session session, params string[] parameters)
+    {
+        var player = session.Player;
+        if (player is null) return;
+
+        //Get the current property, defaulting to false if absent
+        var toggle = player.GetProperty(LootMuted) ?? false;
+
+        //Toggle the prop
+        toggle = !toggle;
+
+        //Set it to the opposite and inform the player
+        player.SetProperty(LootMuted, toggle);
+        player.SendMessage($"Loot messages will {(toggle ? "not" : "")} be sent.");
+    }
 
     [CommandHandler("clean", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0)]
     public static void Clean(Session session, params string[] parameters)

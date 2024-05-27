@@ -1,9 +1,12 @@
-﻿namespace LootAll;
+﻿using ACE.Entity.Enum;
+
+namespace LootAll;
 
 public class Settings
 {
     public LootStyle LootStyle { get; set; } = LootStyle.RoundRobin;
     public LooterRequirements LooterRequirements { get; set; } = LooterRequirements.Range;
+    public ChatMessageType MessageType { get; set; } = ChatMessageType.Broadcast;
 }
 
 public enum LootStyle
