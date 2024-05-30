@@ -244,18 +244,18 @@ public class PatchClass
         player.SendMessage($"Loot messages will {(toggle ? "not" : "")} be sent.");
     }
 
-    [CommandHandler("clean", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0)]
-    public static void Clean(Session session, params string[] parameters)
-    {
-        // @delete - Deletes the selected object. Players may not be deleted this way.
+    //[CommandHandler("clean", AccessLevel.Admin, CommandHandlerFlag.RequiresWorld, 0)]
+    //public static void Clean(Session session, params string[] parameters)
+    //{
+    //    // @delete - Deletes the selected object. Players may not be deleted this way.
 
-        var player = session.Player;
+    //    var player = session.Player;
 
-        foreach (var item in player.Inventory.Values)
-        {
-            item.DeleteObject(player);
-            session.Network.EnqueueSend(new GameMessageDeleteObject(item));
-        }
-    }
+    //    foreach (var item in player.Inventory.Values)
+    //    {
+    //        item.DeleteObject(player);
+    //        session.Network.EnqueueSend(new GameMessageDeleteObject(item));
+    //    }
+    //}
 }
 
